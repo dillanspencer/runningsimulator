@@ -1,0 +1,1103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>5K Motivator</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Bebas+Neue&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  :root {
+    --bg: #0a0a0a;
+    --surface: #111;
+    --border: #222;
+    --text: #f0f0f0;
+    --muted: #555;
+    --red: #e63946;
+    --amber: #f4a261;
+    --green: #2a9d8f;
+    --mono: 'Share Tech Mono', monospace;
+    --display: 'Bebas Neue', cursive;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--mono);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow-x: hidden;
+  }
+
+  #mode-screen {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 2rem;
+    gap: 1.5rem;
+  }
+
+  .logo {
+    font-family: var(--display);
+    font-size: 3rem;
+    letter-spacing: 0.1em;
+    color: var(--red);
+    text-align: center;
+    line-height: 1;
+  }
+
+  .logo span { color: var(--text); font-size: 1rem; letter-spacing: 0.3em; display: block; margin-top: 0.5rem; }
+
+  .mode-btn {
+    width: 100%;
+    padding: 1.25rem 1.5rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 0.9rem;
+    text-align: left;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    transition: border-color 0.15s, background 0.15s;
+  }
+
+  .mode-btn:active { background: #1a1a1a; }
+  .mode-btn.selected { border-color: var(--red); }
+
+  .mode-icon { font-size: 1.8rem; width: 2.5rem; text-align: center; }
+  .mode-label { font-size: 1.1rem; color: var(--text); }
+  .mode-desc { font-size: 0.75rem; color: var(--muted); margin-top: 0.2rem; }
+
+  .start-btn {
+    width: 100%;
+    padding: 1.2rem;
+    background: var(--red);
+    border: none;
+    border-radius: 4px;
+    color: white;
+    font-family: var(--display);
+    font-size: 2rem;
+    letter-spacing: 0.15em;
+    cursor: pointer;
+    transition: opacity 0.15s;
+  }
+
+  .start-btn:active { opacity: 0.8; }
+  .start-btn:disabled { background: var(--muted); cursor: not-allowed; }
+
+  .threshold-row {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 1.25rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+  }
+
+  .threshold-row label { font-size: 0.75rem; color: var(--muted); flex: 1; }
+  .threshold-row input[type=range] { flex: 1.5; accent-color: var(--red); }
+  .threshold-val { font-size: 1rem; color: var(--amber); min-width: 5rem; text-align: right; }
+
+  #runner-screen {
+    display: none;
+    flex-direction: column;
+    min-height: 100vh;
+    padding: 1.5rem 1.25rem;
+    gap: 1rem;
+  }
+
+  .top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .mode-tag {
+    font-size: 0.7rem;
+    letter-spacing: 0.2em;
+    color: var(--muted);
+    border: 1px solid var(--border);
+    padding: 0.3rem 0.6rem;
+    border-radius: 2px;
+  }
+
+  .stop-btn {
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    color: var(--muted);
+    background: none;
+    border: 1px solid var(--border);
+    padding: 0.3rem 0.8rem;
+    border-radius: 2px;
+    cursor: pointer;
+  }
+
+  .pace-block {
+    text-align: center;
+    padding: 1.5rem 0;
+  }
+
+  .pace-label { font-size: 0.7rem; letter-spacing: 0.25em; color: var(--muted); }
+
+  .pace-value {
+    font-family: var(--display);
+    font-size: 6rem;
+    line-height: 1;
+    color: var(--text);
+    transition: color 0.3s;
+  }
+
+  .pace-value.slow { color: var(--red); }
+  .pace-value.ok { color: var(--green); }
+
+  .pace-unit { font-size: 0.8rem; color: var(--muted); margin-top: 0.25rem; }
+
+  .status-bar {
+    height: 6px;
+    background: var(--surface);
+    border-radius: 3px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+  }
+
+  .status-fill {
+    height: 100%;
+    width: 0%;
+    background: var(--green);
+    transition: width 0.5s, background 0.3s;
+    border-radius: 3px;
+  }
+
+  .status-fill.burning { background: var(--red); animation: pulse-bar 0.5s infinite alternate; }
+
+  @keyframes pulse-bar { to { opacity: 0.5; } }
+
+  .stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+  }
+
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 1rem;
+  }
+
+  .stat-label { font-size: 0.65rem; letter-spacing: 0.2em; color: var(--muted); margin-bottom: 0.5rem; }
+  .stat-value { font-size: 1.6rem; color: var(--text); }
+  .stat-value.danger { color: var(--red); }
+  .stat-value.good { color: var(--green); }
+
+  .money-block {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 1.5rem;
+    text-align: center;
+    display: none;
+  }
+
+  .money-block.active { border-color: var(--red); }
+  .money-label { font-size: 0.7rem; letter-spacing: 0.2em; color: var(--muted); margin-bottom: 0.5rem; }
+
+  .money-value {
+    font-family: var(--display);
+    font-size: 4rem;
+    color: var(--amber);
+    transition: color 0.3s;
+  }
+
+  .money-value.burning-active { color: var(--red); animation: shake 0.15s infinite; }
+
+  @keyframes shake {
+    0% { transform: translateX(0); }
+    25% { transform: translateX(-2px); }
+    75% { transform: translateX(2px); }
+    100% { transform: translateX(0); }
+  }
+
+  .burn-rate { font-size: 0.75rem; color: var(--muted); margin-top: 0.5rem; }
+  .burn-rate.active { color: var(--red); }
+
+  .embarrass-block {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 1.25rem;
+    text-align: center;
+    display: none;
+  }
+
+  .embarrass-block.firing { border-color: var(--amber); background: #1a1200; }
+  .embarrass-status { font-size: 0.75rem; letter-spacing: 0.2em; color: var(--muted); }
+  .embarrass-status.firing { color: var(--amber); animation: pulse-text 0.4s infinite alternate; }
+
+  @keyframes pulse-text { to { opacity: 0.4; } }
+
+  .threshold-display {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    font-size: 0.75rem;
+  }
+
+  .threshold-display span:first-child { color: var(--muted); }
+  .threshold-display span:last-child { color: var(--amber); }
+
+  .gps-status {
+    font-size: 0.65rem;
+    letter-spacing: 0.15em;
+    color: var(--muted);
+    text-align: center;
+    padding: 0.5rem;
+  }
+
+  .gps-status.acquiring { color: var(--amber); }
+  .gps-status.locked { color: var(--green); }
+
+  #finish-screen {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 2rem;
+    gap: 1.5rem;
+    text-align: center;
+  }
+
+  .finish-title {
+    font-family: var(--display);
+    font-size: 4rem;
+    color: var(--green);
+    letter-spacing: 0.1em;
+  }
+
+  .finish-stats {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .finish-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.9rem;
+  }
+
+  .finish-row span:first-child { color: var(--muted); }
+  .finish-row span:last-child { color: var(--text); }
+
+  .reset-btn {
+    width: 100%;
+    padding: 1rem;
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 0.85rem;
+    cursor: pointer;
+  }
+
+
+  .system-panel {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 0.9rem 1rem;
+    font-size: 0.72rem;
+    line-height: 1.5;
+    color: var(--muted);
+  }
+
+  .system-panel strong { color: var(--text); }
+  .system-panel.good { border-color: var(--green); color: var(--green); }
+  .system-panel.warn { border-color: var(--amber); color: var(--amber); }
+  .system-panel.bad { border-color: var(--red); color: var(--red); }
+
+  .small-action-row {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+  }
+
+  .small-action-btn {
+    padding: 0.85rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    cursor: pointer;
+  }
+
+  .small-action-btn.good { border-color: var(--green); color: var(--green); }
+  .small-action-btn.warn { border-color: var(--amber); color: var(--amber); }
+
+  .debug-line { font-size: 0.65rem; color: var(--muted); text-align: center; line-height: 1.5; }
+
+  audio { display: none; }
+
+  .audio-setup {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 1rem 1.25rem;
+  }
+
+  .audio-setup-label { font-size: 0.7rem; letter-spacing: 0.2em; color: var(--muted); margin-bottom: 0.75rem; }
+  .audio-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem 0;
+    border-top: 1px solid var(--border);
+    font-size: 0.8rem;
+  }
+
+  .audio-item:first-of-type { border-top: none; }
+
+  .file-btn {
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    padding: 0.3rem 0.6rem;
+    border-radius: 2px;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+
+  .file-btn.loaded { border-color: var(--green); color: var(--green); }
+  .file-name { font-size: 0.7rem; color: var(--muted); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  input[type="file"] { display: none; }
+</style>
+</head>
+<body>
+
+<!-- MODE SELECT SCREEN -->
+<div id="mode-screen">
+  <div class="logo">
+    5K OR ELSE
+    <span>MOTIVATIONAL SUFFERING SYSTEM v1.0</span>
+  </div>
+
+  <button class="mode-btn selected" onclick="selectMode('embarrass')" id="btn-embarrass">
+    <div class="mode-icon">📢</div>
+    <div>
+      <div class="mode-label">MODE 1 — EMBARRASSMENT</div>
+      <div class="mode-desc">Slow down and your phone blasts something awful</div>
+    </div>
+  </button>
+
+  <button class="mode-btn" onclick="selectMode('money')" id="btn-money">
+    <div class="mode-icon">💸</div>
+    <div>
+      <div class="mode-label">MODE 2 — BURN MONEY</div>
+      <div class="mode-desc">Every second below speed costs you real dollars</div>
+    </div>
+  </button>
+
+  <!-- SPEED THRESHOLD -->
+  <div class="threshold-row">
+    <label>SPEED THRESHOLD</label>
+    <input type="range" id="threshold-slider" min="4" max="12" step="0.5" value="7" oninput="updateThreshold()">
+    <div class="threshold-val" id="threshold-display">7.0 km/h</div>
+  </div>
+
+  <!-- MONEY RATE (only shown in money mode) -->
+  <div class="threshold-row" id="money-rate-row" style="display:none">
+    <label>BURN RATE</label>
+    <input type="range" id="rate-slider" min="0.1" max="2" step="0.1" value="0.5" oninput="updateRate()">
+    <div class="threshold-val" id="rate-display">$0.50/sec</div>
+  </div>
+
+  <!-- EMBARRASS AUDIO FILES -->
+  <div class="audio-setup" id="audio-setup">
+    <div class="audio-setup-label">LOAD EMBARRASSING AUDIO FILES</div>
+    <div class="audio-item">
+      <button class="file-btn" id="file-btn-0" onclick="document.getElementById('file-0').click()">LOAD CLIP 1</button>
+      <span class="file-name" id="file-name-0">no file loaded</span>
+      <input type="file" id="file-0" accept="audio/*" onchange="loadAudio(0, this)">
+    </div>
+    <div class="audio-item">
+      <button class="file-btn" id="file-btn-1" onclick="document.getElementById('file-1').click()">LOAD CLIP 2</button>
+      <span class="file-name" id="file-name-1">no file loaded</span>
+      <input type="file" id="file-1" accept="audio/*" onchange="loadAudio(1, this)">
+    </div>
+    <div class="audio-item">
+      <button class="file-btn" id="file-btn-2" onclick="document.getElementById('file-2').click()">LOAD CLIP 3</button>
+      <span class="file-name" id="file-name-2">no file loaded</span>
+      <input type="file" id="file-2" accept="audio/*" onchange="loadAudio(2, this)">
+    </div>
+    <div class="audio-item" style="padding-top:0.75rem; border-top: 1px solid var(--border); font-size:0.7rem; color:var(--muted); line-height:1.6;">
+      TIP: No files loaded? It'll use a built-in beep. Load MP3s of your most embarrassing moments.
+    </div>
+  </div>
+
+
+  <div class="system-panel warn" id="system-status">
+    <strong>AUDIO:</strong> not enabled yet. Tap ENABLE AUDIO, then TEST AUDIO before running.
+  </div>
+
+  <div class="small-action-row">
+    <button class="small-action-btn warn" id="enable-audio-btn" onclick="enableAudioButton()">ENABLE AUDIO</button>
+    <button class="small-action-btn" onclick="testAudio()">TEST AUDIO</button>
+  </div>
+
+  <div class="system-panel" id="wake-status">
+    <strong>SCREEN:</strong> wake lock not started yet. It starts when you press START RUN.
+  </div>
+
+  <div class="debug-line" id="debug-line">debug: waiting</div>
+
+  <audio id="ios-audio-player" playsinline preload="auto"></audio>
+  <video id="keep-awake-video" playsinline muted loop style="position:fixed; width:1px; height:1px; opacity:0; pointer-events:none; left:-9999px; top:-9999px;"></video>
+
+  <button class="start-btn" onclick="startRun()">START RUN</button>
+
+  <div style="font-size:0.65rem; color:var(--muted); text-align:center; line-height:1.8;">
+    Keep screen on during run.<br>
+    GPS accuracy improves after ~30 seconds outdoors.
+  </div>
+</div>
+
+<!-- RUNNER SCREEN -->
+<div id="runner-screen">
+  <div class="top-bar">
+    <div class="mode-tag" id="active-mode-tag">MODE 1</div>
+    <div class="gps-status acquiring" id="gps-status">● ACQUIRING GPS</div>
+    <button class="stop-btn" onclick="stopRun()">END RUN</button>
+  </div>
+
+  <div class="pace-block">
+    <div class="pace-label">CURRENT SPEED</div>
+    <div class="pace-value" id="pace-display">0.0</div>
+    <div class="pace-unit">KM / H</div>
+  </div>
+
+  <div class="status-bar">
+    <div class="status-fill" id="status-fill"></div>
+  </div>
+
+  <div class="threshold-display">
+    <span>SPEED THRESHOLD</span>
+    <span id="threshold-runner-display">7.0 km/h</span>
+  </div>
+
+  <!-- EMBARRASS INDICATOR -->
+  <div class="embarrass-block" id="embarrass-block">
+    <div class="embarrass-status" id="embarrass-status">STANDING BY</div>
+  </div>
+
+  <!-- MONEY BLOCK -->
+  <div class="money-block" id="money-block">
+    <div class="money-label">MONEY BURNED</div>
+    <div class="money-value" id="money-display">$0.00</div>
+    <div class="burn-rate" id="burn-rate-display">$0.50/sec when below speed</div>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-label">DISTANCE</div>
+      <div class="stat-value" id="dist-display">0.00 km</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">TIME</div>
+      <div class="stat-value" id="time-display">00:00</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">CURRENT PACE</div>
+      <div class="stat-value" id="avg-pace-display">--:--</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">SHAME EVENTS</div>
+      <div class="stat-value danger" id="shame-display">0</div>
+    </div>
+  </div>
+
+  <div class="gps-status" id="gps-accuracy">waiting for signal...</div>
+</div>
+
+<!-- FINISH SCREEN -->
+<div id="finish-screen">
+  <div class="finish-title">DONE.</div>
+  <div class="finish-stats" id="finish-stats"></div>
+  <button class="reset-btn" onclick="resetToStart()">RUN AGAIN</button>
+</div>
+
+<script>
+const TARGET_DISTANCE = 5.0;
+
+let mode = 'embarrass';
+let thresholdKmh = 7;
+let burnRate = 0.50;
+let running = false;
+
+let totalDistance = 0;
+let startTime = null;
+let elapsedTime = 0;
+let shameEvents = 0;
+let moneyBurned = 0;
+let isBurning = false;
+let lastPos = null;
+let watchId = null;
+let timerInterval = null;
+let lastShameTime = 0;
+let currentSpeedKmh = 0;
+let hasGPS = false;
+
+let audioCtx = null;
+let audioUnlocked = false;
+let audioBuffers = [null, null, null];
+let audioUrls = [null, null, null];
+let wakeLock = null;
+let keepAwakeInterval = null;
+
+function setSystemStatus(message, type = 'warn') {
+  const el = document.getElementById('system-status');
+  if (!el) return;
+  el.className = 'system-panel ' + type;
+  el.innerHTML = message;
+}
+
+function setWakeStatus(message, type = '') {
+  const el = document.getElementById('wake-status');
+  if (!el) return;
+  el.className = 'system-panel ' + type;
+  el.innerHTML = message;
+}
+
+function setDebug(message) {
+  const el = document.getElementById('debug-line');
+  if (el) el.textContent = 'debug: ' + message;
+  console.log('[5K]', message);
+}
+
+function getAudioContext() {
+  const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+  if (!AudioContextClass) return null;
+  if (!audioCtx) audioCtx = new AudioContextClass();
+  return audioCtx;
+}
+
+function decodeAudioDataCompat(ctx, arrayBuffer) {
+  return new Promise((resolve, reject) => {
+    const copy = arrayBuffer.slice(0);
+    const maybePromise = ctx.decodeAudioData(copy, resolve, reject);
+    if (maybePromise && typeof maybePromise.then === 'function') {
+      maybePromise.then(resolve).catch(reject);
+    }
+  });
+}
+
+async function playTinyUnlockSound(ctx) {
+  // A very short, quiet click. iOS needs a real sound source started by a tap.
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+  osc.frequency.value = 440;
+  gain.gain.setValueAtTime(0.0001, ctx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.02, ctx.currentTime + 0.01);
+  gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.08);
+  osc.start(ctx.currentTime);
+  osc.stop(ctx.currentTime + 0.09);
+}
+
+async function unlockAudio() {
+  const ctx = getAudioContext();
+  if (!ctx) {
+    setSystemStatus('<strong>AUDIO:</strong> WebAudio is not supported in this browser.', 'bad');
+    return false;
+  }
+
+  try {
+    if (ctx.state !== 'running') await ctx.resume();
+    await playTinyUnlockSound(ctx);
+
+    // Also unlock an HTMLAudioElement path. This makes uploaded file playback more reliable on iOS.
+    const player = document.getElementById('ios-audio-player');
+    if (player) {
+      player.muted = true;
+      player.src = 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABAAZGF0YQAAAAA=';
+      try { await player.play(); } catch (e) {}
+      player.pause();
+      player.currentTime = 0;
+      player.muted = false;
+    }
+
+    audioUnlocked = ctx.state === 'running';
+    if (audioUnlocked) {
+      document.getElementById('enable-audio-btn')?.classList.add('good');
+      setSystemStatus('<strong>AUDIO:</strong> enabled. Tap TEST AUDIO to confirm your iPhone speaker is actually playing.', 'good');
+      setDebug('audio unlocked, context=' + ctx.state);
+    } else {
+      setSystemStatus('<strong>AUDIO:</strong> still blocked. Tap ENABLE AUDIO again, then TEST AUDIO.', 'bad');
+      setDebug('audio blocked, context=' + ctx.state);
+    }
+    return audioUnlocked;
+  } catch (err) {
+    audioUnlocked = false;
+    setSystemStatus('<strong>AUDIO:</strong> unlock failed: ' + (err?.message || err), 'bad');
+    setDebug('audio unlock error: ' + (err?.message || err));
+    return false;
+  }
+}
+
+async function enableAudioButton() {
+  await unlockAudio();
+}
+
+async function testAudio() {
+  await unlockAudio();
+  const ok = await playEmbarrass(true);
+  if (ok) {
+    setSystemStatus('<strong>AUDIO:</strong> test fired. If you heard nothing, turn off Silent Mode and raise media volume.', 'good');
+  } else {
+    setSystemStatus('<strong>AUDIO:</strong> test was blocked. Tap ENABLE AUDIO, then TEST AUDIO again.', 'bad');
+  }
+}
+
+function selectMode(m) {
+  mode = m;
+  document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('selected'));
+  document.getElementById('btn-' + m).classList.add('selected');
+  document.getElementById('money-rate-row').style.display = m === 'money' ? 'flex' : 'none';
+  document.getElementById('audio-setup').style.display = m === 'embarrass' ? 'block' : 'none';
+}
+
+function updateThreshold() {
+  thresholdKmh = parseFloat(document.getElementById('threshold-slider').value);
+  document.getElementById('threshold-display').textContent = thresholdKmh.toFixed(1) + ' km/h';
+}
+
+function updateRate() {
+  burnRate = parseFloat(document.getElementById('rate-slider').value);
+  document.getElementById('rate-display').textContent = `$${burnRate.toFixed(2)}/sec`;
+}
+
+async function loadAudio(index, input) {
+  const file = input.files[0];
+  if (!file) return;
+
+  // Keep an object URL too. On iOS this is often more dependable than buffer-only playback.
+  if (audioUrls[index]) URL.revokeObjectURL(audioUrls[index]);
+  audioUrls[index] = URL.createObjectURL(file);
+
+  document.getElementById('file-btn-' + index).classList.add('loaded');
+  document.getElementById('file-name-' + index).textContent = file.name;
+  setSystemStatus('<strong>AUDIO:</strong> file loaded. Tap ENABLE AUDIO, then TEST AUDIO.', 'warn');
+
+  const ctx = getAudioContext();
+  if (ctx) {
+    try {
+      const arrayBuffer = await file.arrayBuffer();
+      audioBuffers[index] = await decodeAudioDataCompat(ctx, arrayBuffer);
+      setDebug('decoded clip ' + (index + 1) + ': ' + file.name);
+    } catch (err) {
+      // Not fatal: the HTMLAudioElement path can still play it.
+      audioBuffers[index] = null;
+      setDebug('buffer decode failed, object URL still available: ' + (err?.message || err));
+    }
+  }
+}
+
+function formatPace(kmh) {
+  if (!kmh || kmh < 0.5) return '--:--';
+  const minPerKm = 60 / kmh;
+  const mins = Math.floor(minPerKm);
+  const secs = Math.round((minPerKm - mins) * 60);
+  return `${mins}:${secs.toString().padStart(2,'0')}`;
+}
+
+function formatSpeed(kmh) {
+  if (!kmh || kmh < 0.3) return '0.0';
+  return kmh.toFixed(1);
+}
+
+function formatTime(ms) {
+  const totalSecs = Math.floor(ms / 1000);
+  const mins = Math.floor(totalSecs / 60);
+  const secs = totalSecs % 60;
+  return `${mins.toString().padStart(2,'0')}:${secs.toString().padStart(2,'0')}`;
+}
+
+async function playViaHtmlAudio(url) {
+  const player = document.getElementById('ios-audio-player');
+  if (!player || !url) return false;
+  try {
+    player.pause();
+    player.currentTime = 0;
+  } catch (e) {}
+  player.src = url;
+  player.volume = 1;
+  player.muted = false;
+  try {
+    await player.play();
+    setDebug('played html audio');
+    return true;
+  } catch (err) {
+    setDebug('html audio blocked: ' + (err?.message || err));
+    return false;
+  }
+}
+
+function playBeepWithWebAudio(loud = false) {
+  const ctx = getAudioContext();
+  if (!ctx || ctx.state !== 'running') return false;
+
+  try {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.frequency.value = loud ? 660 : 110;
+    osc.type = 'sawtooth';
+    gain.gain.setValueAtTime(0.001, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(loud ? 0.9 : 0.7, ctx.currentTime + 0.03);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 1.2);
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + 1.25);
+    setDebug('played webaudio beep');
+    return true;
+  } catch (err) {
+    setDebug('webaudio beep failed: ' + (err?.message || err));
+    return false;
+  }
+}
+
+async function playEmbarrass(isTest = false) {
+  if (!audioUnlocked) await unlockAudio();
+
+  const loadedUrls = audioUrls.filter(Boolean);
+  if (loadedUrls.length > 0) {
+    const url = loadedUrls[Math.floor(Math.random() * loadedUrls.length)];
+    const played = await playViaHtmlAudio(url);
+    if (played) return true;
+  }
+
+  const ctx = getAudioContext();
+  if (ctx && ctx.state === 'running') {
+    const loadedBuffers = audioBuffers.filter(b => b !== null);
+    if (loadedBuffers.length > 0) {
+      try {
+        const buffer = loadedBuffers[Math.floor(Math.random() * loadedBuffers.length)];
+        const src = ctx.createBufferSource();
+        const gain = ctx.createGain();
+        gain.gain.value = 1.0;
+        src.buffer = buffer;
+        src.connect(gain);
+        gain.connect(ctx.destination);
+        src.start(0);
+        setDebug('played audio buffer');
+        return true;
+      } catch (err) {
+        setDebug('buffer playback failed: ' + (err?.message || err));
+      }
+    }
+  }
+
+  const beeped = playBeepWithWebAudio(isTest);
+  if (!beeped) {
+    const status = document.getElementById('embarrass-status');
+    if (status) status.textContent = 'TAP ENABLE AUDIO';
+  }
+  return beeped;
+}
+
+async function requestWakeLock() {
+  try {
+    if ('wakeLock' in navigator) {
+      wakeLock = await navigator.wakeLock.request('screen');
+      setWakeStatus('<strong>SCREEN:</strong> wake lock active.', 'good');
+      wakeLock.addEventListener('release', () => {
+        if (running) setWakeStatus('<strong>SCREEN:</strong> wake lock released. Tap screen or restart run if display starts sleeping.', 'warn');
+      });
+      return true;
+    }
+  } catch (err) {
+    setDebug('wake lock failed: ' + (err?.message || err));
+  }
+
+  // Fallback: keep doing small activity and try a muted hidden video. iOS support varies.
+  try {
+    const video = document.getElementById('keep-awake-video');
+    if (video) {
+      video.src = 'data:video/mp4;base64,AAAAIGZ0eXBtcDQyAAAAAG1wNDJpc29tYXZjMQAAAAdiZGF0YQ==';
+      video.muted = true;
+      video.loop = true;
+      video.playsInline = true;
+      video.play().catch(() => {});
+    }
+  } catch (e) {}
+
+  if (keepAwakeInterval) clearInterval(keepAwakeInterval);
+  keepAwakeInterval = setInterval(() => {
+    // Does not guarantee wake on iOS, but helps keep the page active when possible.
+    document.title = running ? '5K RUNNING ' + new Date().toLocaleTimeString() : '5K Motivator';
+  }, 15000);
+
+  setWakeStatus('<strong>SCREEN:</strong> this browser may not support true wake lock. For iPhone, set Settings → Display & Brightness → Auto-Lock → Never while testing.', 'warn');
+  return false;
+}
+
+async function releaseWakeLock() {
+  if (keepAwakeInterval) {
+    clearInterval(keepAwakeInterval);
+    keepAwakeInterval = null;
+  }
+  document.title = '5K Motivator';
+  try {
+    if (wakeLock) await wakeLock.release();
+  } catch (e) {}
+  wakeLock = null;
+  setWakeStatus('<strong>SCREEN:</strong> wake lock stopped.', '');
+}
+
+async function startRun() {
+  await unlockAudio(); // must happen inside this START RUN tap on iOS
+  await requestWakeLock();
+
+  if (!navigator.geolocation) {
+    setSystemStatus('<strong>GPS:</strong> not available in this browser. On iPhone use Safari over HTTPS or a saved web app.', 'bad');
+    return;
+  }
+
+  running = true;
+  totalDistance = 0;
+  moneyBurned = 0;
+  shameEvents = 0;
+  startTime = Date.now();
+  lastPos = null;
+  isBurning = false;
+  currentSpeedKmh = 0;
+  hasGPS = false;
+
+  document.getElementById('mode-screen').style.display = 'none';
+  document.getElementById('runner-screen').style.display = 'flex';
+
+  document.getElementById('threshold-runner-display').textContent = thresholdKmh.toFixed(1) + ' km/h';
+  document.getElementById('active-mode-tag').textContent = mode === 'embarrass' ? 'MODE 1 — EMBARRASSMENT' : 'MODE 2 — BURN MONEY';
+  document.getElementById('burn-rate-display').textContent = `$${burnRate.toFixed(2)}/sec when below speed`;
+
+  if (mode === 'embarrass') {
+    document.getElementById('embarrass-block').style.display = 'block';
+    document.getElementById('money-block').style.display = 'none';
+  } else {
+    document.getElementById('embarrass-block').style.display = 'none';
+    document.getElementById('money-block').style.display = 'block';
+  }
+
+  watchId = navigator.geolocation.watchPosition(onGPS, onGPSError, {
+    enableHighAccuracy: true,
+    timeout: 10000,
+    maximumAge: 0
+  });
+
+  timerInterval = setInterval(onTick, 500);
+}
+
+function onGPS(pos) {
+  hasGPS = true;
+  document.getElementById('gps-status').textContent = '● GPS LOCKED';
+  document.getElementById('gps-status').className = 'gps-status locked';
+
+  const acc = pos.coords.accuracy;
+  document.getElementById('gps-accuracy').textContent = `accuracy: ±${Math.round(acc)}m`;
+
+  if (pos.coords.speed !== null && pos.coords.speed >= 0) {
+    currentSpeedKmh = pos.coords.speed * 3.6;
+  } else if (lastPos) {
+    const seconds = (pos.timestamp - lastPos.timestamp) / 1000;
+    const dist = haversine(lastPos.coords.latitude, lastPos.coords.longitude,
+                           pos.coords.latitude, pos.coords.longitude);
+    if (seconds > 0 && dist >= 0) currentSpeedKmh = (dist / seconds) * 3600;
+  }
+
+  if (lastPos) {
+    const dist = haversine(lastPos.coords.latitude, lastPos.coords.longitude,
+                           pos.coords.latitude, pos.coords.longitude);
+    if (dist > 0.002 && dist < 0.1) {
+      totalDistance += dist;
+    }
+  }
+
+  lastPos = pos;
+
+  if (totalDistance >= TARGET_DISTANCE) {
+    finishRun();
+  }
+}
+
+function onGPSError(err) {
+  document.getElementById('gps-status').textContent = '● GPS ERROR';
+  document.getElementById('gps-status').className = 'gps-status acquiring';
+  document.getElementById('gps-accuracy').textContent = err?.message ? ('GPS error: ' + err.message) : 'GPS error';
+}
+
+function onTick() {
+  if (!running) return;
+  elapsedTime = Date.now() - startTime;
+
+  document.getElementById('time-display').textContent = formatTime(elapsedTime);
+  document.getElementById('dist-display').textContent = totalDistance.toFixed(2) + ' km';
+
+  const distNum = parseFloat(totalDistance.toFixed(2));
+  const pct = Math.min((distNum / TARGET_DISTANCE) * 100, 100);
+  document.getElementById('status-fill').style.width = pct + '%';
+
+  document.getElementById('avg-pace-display').textContent = formatPace(currentSpeedKmh);
+
+  const paceEl = document.getElementById('pace-display');
+  paceEl.textContent = formatSpeed(currentSpeedKmh);
+
+  const isSlow = hasGPS && currentSpeedKmh < thresholdKmh;
+  const statusFill = document.getElementById('status-fill');
+
+  if (isSlow) {
+    paceEl.className = 'pace-value slow';
+    statusFill.classList.add('burning');
+
+    if (mode === 'embarrass') {
+      const now = Date.now();
+      if (now - lastShameTime > 4000) {
+        lastShameTime = now;
+        shameEvents++;
+        document.getElementById('shame-display').textContent = shameEvents;
+        document.getElementById('embarrass-status').textContent = '⚠ TRIGGERING EMBARRASSMENT';
+        document.getElementById('embarrass-status').className = 'embarrass-status firing';
+        document.getElementById('embarrass-block').classList.add('firing');
+        playEmbarrass(false).then(ok => {
+          if (!ok) document.getElementById('embarrass-status').textContent = 'AUDIO BLOCKED — TAP SCREEN';
+        });
+        setTimeout(() => {
+          document.getElementById('embarrass-status').textContent = 'STANDING BY';
+          document.getElementById('embarrass-status').className = 'embarrass-status';
+          document.getElementById('embarrass-block').classList.remove('firing');
+        }, 3000);
+      }
+    } else {
+      if (!isBurning) {
+        isBurning = true;
+        shameEvents++;
+        document.getElementById('shame-display').textContent = shameEvents;
+        document.getElementById('money-block').classList.add('active');
+        document.getElementById('burn-rate-display').className = 'burn-rate active';
+      }
+      moneyBurned += burnRate * 0.5;
+      const moneyEl = document.getElementById('money-display');
+      moneyEl.textContent = '$' + moneyBurned.toFixed(2);
+      moneyEl.className = 'money-value burning-active';
+    }
+  } else {
+    paceEl.className = hasGPS ? 'pace-value ok' : 'pace-value';
+    statusFill.classList.remove('burning');
+
+    if (mode === 'money' && isBurning) {
+      isBurning = false;
+      document.getElementById('money-block').classList.remove('active');
+      document.getElementById('money-display').className = 'money-value';
+      document.getElementById('burn-rate-display').className = 'burn-rate';
+    }
+  }
+}
+
+function haversine(lat1, lon1, lat2, lon2) {
+  const R = 6371;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180) * Math.cos(lat2*Math.PI/180) * Math.sin(dLon/2)**2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+
+function stopRun() {
+  if (confirm('End run early?')) finishRun();
+}
+
+async function finishRun() {
+  running = false;
+  if (watchId) navigator.geolocation.clearWatch(watchId);
+  clearInterval(timerInterval);
+  await releaseWakeLock();
+
+  document.getElementById('runner-screen').style.display = 'none';
+  document.getElementById('finish-screen').style.display = 'flex';
+
+  const avgKmh = totalDistance > 0 ? (totalDistance / (elapsedTime / 3600000)) : 0;
+
+  let statsHtml = `
+    <div class="finish-row"><span>DISTANCE</span><span>${totalDistance.toFixed(2)} km</span></div>
+    <div class="finish-row"><span>TIME</span><span>${formatTime(elapsedTime)}</span></div>
+    <div class="finish-row"><span>AVG PACE</span><span>${formatPace(avgKmh)} /km</span></div>
+    <div class="finish-row"><span>SHAME EVENTS</span><span>${shameEvents}</span></div>
+  `;
+
+  if (mode === 'money') {
+    statsHtml += `<div class="finish-row" style="margin-top:0.5rem; padding-top:0.75rem; border-top:1px solid var(--border)"><span>MONEY BURNED</span><span style="color:var(--red)">$${moneyBurned.toFixed(2)}</span></div>`;
+  }
+
+  document.getElementById('finish-stats').innerHTML = statsHtml;
+}
+
+function resetToStart() {
+  document.getElementById('finish-screen').style.display = 'none';
+  document.getElementById('mode-screen').style.display = 'flex';
+}
+
+selectMode('embarrass');
+updateThreshold();
+updateRate();
+setDebug('page loaded');
+
+// Let any tap repair audio if iOS suspends it again.
+['touchend', 'pointerup', 'click'].forEach(eventName => {
+  document.addEventListener(eventName, () => {
+    const ctx = getAudioContext();
+    if (ctx && ctx.state === 'suspended') ctx.resume().catch(() => {});
+  }, { passive: true });
+});
+
+document.addEventListener('visibilitychange', async () => {
+  if (document.visibilityState === 'visible' && running) {
+    await requestWakeLock();
+    const ctx = getAudioContext();
+    if (ctx && ctx.state === 'suspended') ctx.resume().catch(() => {});
+  }
+  if (document.hidden && running) {
+    setDebug('screen hidden — iOS may pause GPS/audio');
+  }
+});
+</script>
+</body>
+</html>
