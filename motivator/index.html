@@ -399,25 +399,25 @@
 <!-- MODE SELECT SCREEN -->
 <div id="mode-screen">
   <div class="logo">
-    5K OR ELSE
+    5K MOTIVATOR
     <span>MOTIVATIONAL SUFFERING SYSTEM v1.0</span>
   </div>
 
   <button class="mode-btn selected" onclick="selectMode('embarrass')" id="btn-embarrass">
     <div class="mode-icon">📢</div>
     <div>
-      <div class="mode-label">MODE 1 — EMBARRASSMENT</div>
-      <div class="mode-desc">Slow down and your phone blasts something awful</div>
+      <div class="mode-label">EMBARRASSMENT MODE</div>
+      <div class="mode-desc">Slow down and your phone plays embarrassing audio</div>
     </div>
   </button>
 
-  <button class="mode-btn" onclick="selectMode('money')" id="btn-money">
+  <!-- <button class="mode-btn" onclick="selectMode('money')" id="btn-money">
     <div class="mode-icon">💸</div>
     <div>
-      <div class="mode-label">MODE 2 — BURN MONEY</div>
+      <div class="mode-label">BURN MONEY MODE</div>
       <div class="mode-desc">Every second below speed costs you real dollars</div>
     </div>
-  </button>
+  </button> -->
 
   <!-- SPEED THRESHOLD -->
   <div class="threshold-row">
@@ -766,7 +766,7 @@ async function startRun() {
   document.getElementById('runner-screen').style.display = 'flex';
 
   document.getElementById('threshold-runner-display').textContent = thresholdKmh.toFixed(1) + ' km/h';
-  document.getElementById('active-mode-tag').textContent = mode === 'embarrass' ? 'MODE 1 — EMBARRASSMENT' : 'MODE 2 — BURN MONEY';
+  document.getElementById('active-mode-tag').textContent = mode === 'embarrass' ? 'EMBARRASSMENT MODE' : 'BURN MONEY MODE';
   document.getElementById('burn-rate-display').textContent = `$${burnRate.toFixed(2)}/sec when below speed`;
 
   if (mode === 'embarrass') {
